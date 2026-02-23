@@ -3,7 +3,12 @@ import unittest
 from pathlib import Path
 from urllib.parse import parse_qs
 
-from starbucks_monitor.notify import NotificationHistoryStore, TelegramNotifier, build_restock_message
+from starbucks_monitor.notify import (
+    NotificationHistoryStore,
+    TelegramNotifier,
+    build_restock_message,
+    build_status_snapshot_message,
+)
 
 
 class NotifyTest(unittest.TestCase):
@@ -12,6 +17,16 @@ class NotifyTest(unittest.TestCase):
         msg = build_restock_message(events)
         self.assertIn("Restock detected", msg)
         self.assertIn("A: OUT_OF_STOCK -> IN_STOCK", msg)
+
+    def test_build_status_snapshot_message(self):
+        records = [
+            {"product": "A", "status": "OUT_OF_STOCK"},
+            {"product": "B", "status": "IN_STOCK"},
+        ]
+        msg = build_status_snapshot_message(records)
+        self.assertIn("Test notification", msg)
+        self.assertIn("A: OUT_OF_STOCK", msg)
+        self.assertIn("B: IN_STOCK", msg)
 
     def test_telegram_notifier_posts_form_payload(self):
         captured: dict[str, str] = {}

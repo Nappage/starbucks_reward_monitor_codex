@@ -2,6 +2,12 @@ name: Starbucks stock monitor
 
 on:
   workflow_dispatch:
+    inputs:
+      send_test_notification:
+        description: "Send Telegram test notification with current statuses"
+        required: false
+        default: false
+        type: boolean
   schedule:
     - cron: "*/30 * * * *"
 
@@ -12,6 +18,7 @@ jobs:
     env:
       TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
       TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      SEND_TEST_NOTIFICATION: ${{ github.event.inputs.send_test_notification || 'false' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -29,9 +36,15 @@ jobs:
 
       - name: Run stock monitor (rendered mode)
         run: |
+          EXTRA_ARGS=""
+          if [ "$SEND_TEST_NOTIFICATION" = "true" ]; then
+            EXTRA_ARGS="--send-test-notification"
+          fi
+
           PYTHONPATH=src python -m starbucks_monitor.cli \
             --mode rendered \
             --product "スターマグ ブラウン 296ml" \
             --product "スターマグ グリーン 296ml" \
             --telegram-bot-token "$TELEGRAM_BOT_TOKEN" \
-            --telegram-chat-id "$TELEGRAM_CHAT_ID"
+            --telegram-chat-id "$TELEGRAM_CHAT_ID" \
+            $EXTRA_ARGS

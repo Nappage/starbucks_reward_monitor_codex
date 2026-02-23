@@ -13,7 +13,7 @@ from .monitor import (
     parse_stock_statuses_rendered,
     run_monitor,
 )
-from .notify import TelegramNotifier
+from .notify import TelegramNotifier, build_status_snapshot_message
 from .workflow import process_records
 
 
@@ -55,6 +55,11 @@ def build_parser() -> argparse.ArgumentParser:
         default=None,
         help="Telegram chat id for restock notifications.",
     )
+    parser.add_argument(
+        "--send-test-notification",
+        action="store_true",
+        help="Send a Telegram test notification with current statuses (for delivery check).",
+    )
     return parser
 
 
@@ -77,6 +82,13 @@ def main() -> int:
             return 1
         notifier = TelegramNotifier(args.telegram_bot_token, args.telegram_chat_id)
 
+    if args.send_test_notification and notifier is None:
+        print(
+            "ERROR: --send-test-notification requires --telegram-bot-token and --telegram-chat-id",
+            file=sys.stderr,
+        )
+        return 1
+
     try:
         records = run_monitor(url=args.url, products=products, fetcher=fetcher, parser=status_parser)
         summary = process_records(
@@ -85,6 +97,12 @@ def main() -> int:
             notification_history_file=args.notification_history_file,
             notifier=notifier,
         )
+
+        test_notification_sent = 0
+        if args.send_test_notification and notifier is not None:
+            notifier.send(build_status_snapshot_message(records))
+            test_notification_sent = 1
+
     except Exception as exc:  # CLI boundary
         print(f"ERROR: {exc}", file=sys.stderr)
         return 1
@@ -94,7 +112,8 @@ def main() -> int:
 
     print(
         f"SUMMARY\tchanges={summary['changes']}\trestocks={summary['restocks']}"
-        f"\tnotifications_sent={summary['notifications_sent']}",
+        f"\tnotifications_sent={summary['notifications_sent']}"
+        f"\ttest_notification_sent={test_notification_sent}",
         file=sys.stderr,
     )
     return 0

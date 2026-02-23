@@ -14,6 +14,13 @@ def build_restock_message(events: list[dict[str, str]]) -> str:
     return "\n".join(lines)
 
 
+def build_status_snapshot_message(records: list[dict[str, str]]) -> str:
+    lines = ["[Starbucks Reward Monitor] Test notification (current statuses)"]
+    for record in records:
+        lines.append(f"- {record['product']}: {record['status']}")
+    return "\n".join(lines)
+
+
 def _default_request_sender(request: Request) -> None:
     with urlopen(request, timeout=20):
         return

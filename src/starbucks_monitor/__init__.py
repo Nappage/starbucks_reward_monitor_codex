@@ -8,7 +8,12 @@ from .monitor import (
     parse_stock_statuses_rendered,
     run_monitor,
 )
-from .notify import NotificationHistoryStore, TelegramNotifier, build_restock_message
+from .notify import (
+    NotificationHistoryStore,
+    TelegramNotifier,
+    build_restock_message,
+    build_status_snapshot_message,
+)
 from .state import detect_restock_events, detect_status_changes, load_previous_statuses, save_current_statuses
 from .workflow import process_records
 
@@ -28,5 +33,6 @@ __all__ = [
     "TelegramNotifier",
     "NotificationHistoryStore",
     "build_restock_message",
+    "build_status_snapshot_message",
     "process_records",
 ]

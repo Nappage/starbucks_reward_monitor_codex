@@ -13,7 +13,6 @@
 - Phase 2 完了（永続化・差分検知）
 - Phase 3 着手（Telegram通知・重複通知抑止）
 
-
 ## 使い方（最小）
 ```bash
 PYTHONPATH=src python -m starbucks_monitor.cli
@@ -37,6 +36,9 @@ PYTHONPATH=src python -m starbucks_monitor.cli \
 > `--mode rendered` は Playwright が必要です。
 > `pip install playwright && playwright install chromium`
 
+
+
+
 差分検知+通知まで実行する場合（在庫復活時のみ通知）:
 ```bash
 PYTHONPATH=src python -m starbucks_monitor.cli \
@@ -45,6 +47,16 @@ PYTHONPATH=src python -m starbucks_monitor.cli \
   --telegram-bot-token "$TELEGRAM_BOT_TOKEN" \
   --telegram-chat-id "$TELEGRAM_CHAT_ID"
 ```
+
+テスト通知を明示的に送る（在庫変化がなくても1回送信）:
+```bash
+PYTHONPATH=src python -m starbucks_monitor.cli \
+  --mode rendered \
+  --send-test-notification \
+  --telegram-bot-token "$TELEGRAM_BOT_TOKEN" \
+  --telegram-chat-id "$TELEGRAM_CHAT_ID"
+```
+
 
 ## テスト実行
 ```bash
@@ -68,6 +80,9 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 - 実行方式:
   - 手動実行（`workflow_dispatch`）
   - 30分おき定期実行（`schedule`）
+
+- テスト通知（在庫変化がなくてもTelegram送信を確認）:
+  - Actions手動実行時に `send_test_notification=true` を指定
 - 必要Secrets:
   - `TELEGRAM_BOT_TOKEN`
   - `TELEGRAM_CHAT_ID`

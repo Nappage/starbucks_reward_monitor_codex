@@ -22,5 +22,11 @@ class CLITest(unittest.TestCase):
         self.assertIsNone(args.telegram_bot_token)
         self.assertIsNone(args.telegram_chat_id)
 
+    def test_accepts_send_test_notification_flag(self):
+        parser = build_parser()
+        args = parser.parse_args(["--send-test-notification"])
+        self.assertTrue(args.send_test_notification)
+
+
 if __name__ == "__main__":
     unittest.main()
