@@ -9,7 +9,7 @@ on:
         default: false
         type: boolean
   schedule:
-    - cron: "*/30 * * * *"
+    - cron: "7,37 * * * *"
 
 jobs:
   monitor:
