@@ -13,6 +13,7 @@
 - Phase 2 完了（永続化・差分検知）
 - Phase 3 着手（Telegram通知・重複通知抑止）
 
+
 ## 使い方（最小）
 ```bash
 PYTHONPATH=src python -m starbucks_monitor.cli
@@ -35,9 +36,6 @@ PYTHONPATH=src python -m starbucks_monitor.cli \
 
 > `--mode rendered` は Playwright が必要です。
 > `pip install playwright && playwright install chromium`
-
-
-
 
 差分検知+通知まで実行する場合（在庫復活時のみ通知）:
 ```bash

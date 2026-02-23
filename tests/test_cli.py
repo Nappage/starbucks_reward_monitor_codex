@@ -22,6 +22,5 @@ class CLITest(unittest.TestCase):
         self.assertIsNone(args.telegram_bot_token)
         self.assertIsNone(args.telegram_chat_id)
 
-
 if __name__ == "__main__":
     unittest.main()
