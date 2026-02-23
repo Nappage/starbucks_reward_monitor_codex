@@ -14,6 +14,13 @@ class CLITest(unittest.TestCase):
         args = parser.parse_args(["--mode", "rendered"])
         self.assertEqual(args.mode, "rendered")
 
+    def test_has_phase2_and_phase3_options(self):
+        parser = build_parser()
+        args = parser.parse_args([])
+        self.assertEqual(args.state_file, ".starbucks_monitor_state.json")
+        self.assertEqual(args.notification_history_file, ".starbucks_monitor_notifications.json")
+        self.assertIsNone(args.telegram_bot_token)
+        self.assertIsNone(args.telegram_chat_id)
 
 if __name__ == "__main__":
     unittest.main()

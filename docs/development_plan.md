@@ -98,4 +98,5 @@ https://www.starbucks.co.jp/mystarbucks/reward/exchange/original_goods/
 ## 8. 進捗メモ
 - 完了: Phase 0（計画策定）
 - 完了: Phase 1（仕様定義・static/rendered解析・CLIログ出力・単体テスト・実ページ確認）
-- 進行中: Phase 2（永続化・差分検知）仕様策定とTDD着手
+- 完了: Phase 2（永続化・差分検知の仕様・実装・テスト）
+- 進行中: Phase 3（Telegram通知・重複通知抑止）実装と検証
