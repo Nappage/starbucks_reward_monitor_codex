@@ -9,8 +9,8 @@ from .monitor import (
     run_monitor,
 )
 from .notify import (
+    BlueskyNotifier,
     NotificationHistoryStore,
-    TelegramNotifier,
     build_restock_message,
     build_status_snapshot_message,
 )
@@ -30,7 +30,7 @@ __all__ = [
     "detect_status_changes",
     "load_previous_statuses",
     "save_current_statuses",
-    "TelegramNotifier",
+    "BlueskyNotifier",
     "NotificationHistoryStore",
     "build_restock_message",
     "build_status_snapshot_message",

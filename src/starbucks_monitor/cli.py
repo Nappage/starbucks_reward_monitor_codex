@@ -13,7 +13,7 @@ from .monitor import (
     parse_stock_statuses_rendered,
     run_monitor,
 )
-from .notify import TelegramNotifier, build_status_snapshot_message
+from .notify import BlueskyNotifier, build_status_snapshot_message
 from .workflow import process_records
 
 
@@ -46,19 +46,24 @@ def build_parser() -> argparse.ArgumentParser:
         help="Path to JSON file storing sent notification event ids (dedupe).",
     )
     parser.add_argument(
-        "--telegram-bot-token",
+        "--bluesky-identifier",
         default=None,
-        help="Telegram bot token. If set with --telegram-chat-id, restock events are notified.",
+        help="Bluesky account identifier (handle or DID). If set with --bluesky-app-password, restock events are posted.",
     )
     parser.add_argument(
-        "--telegram-chat-id",
+        "--bluesky-app-password",
         default=None,
-        help="Telegram chat id for restock notifications.",
+        help="Bluesky app password for posting restock notifications.",
+    )
+    parser.add_argument(
+        "--bluesky-service",
+        default="https://bsky.social",
+        help="Bluesky (AT Protocol) service base URL.",
     )
     parser.add_argument(
         "--send-test-notification",
         action="store_true",
-        help="Send a Telegram test notification with current statuses (for delivery check).",
+        help="Send a Bluesky test post with current statuses (for delivery check).",
     )
     return parser
 
@@ -73,18 +78,18 @@ def main() -> int:
     status_parser = parse_stock_statuses if args.mode == "static" else parse_stock_statuses_rendered
 
     notifier = None
-    if args.telegram_bot_token or args.telegram_chat_id:
-        if not args.telegram_bot_token or not args.telegram_chat_id:
+    if args.bluesky_identifier or args.bluesky_app_password:
+        if not args.bluesky_identifier or not args.bluesky_app_password:
             print(
-                "ERROR: both --telegram-bot-token and --telegram-chat-id are required for Telegram notifications",
+                "ERROR: both --bluesky-identifier and --bluesky-app-password are required for Bluesky notifications",
                 file=sys.stderr,
             )
             return 1
-        notifier = TelegramNotifier(args.telegram_bot_token, args.telegram_chat_id)
+        notifier = BlueskyNotifier(args.bluesky_identifier, args.bluesky_app_password, service=args.bluesky_service)
 
     if args.send_test_notification and notifier is None:
         print(
-            "ERROR: --send-test-notification requires --telegram-bot-token and --telegram-chat-id",
+            "ERROR: --send-test-notification requires --bluesky-identifier and --bluesky-app-password",
             file=sys.stderr,
         )
         return 1

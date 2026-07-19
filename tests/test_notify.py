@@ -1,13 +1,16 @@
+import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import parse_qs
 
 from starbucks_monitor.notify import (
+    BLUESKY_MAX_GRAPHEMES,
+    BlueskyNotifier,
     NotificationHistoryStore,
-    TelegramNotifier,
     build_restock_message,
     build_status_snapshot_message,
+    truncate_for_bluesky,
 )
 
 
@@ -28,22 +31,57 @@ class NotifyTest(unittest.TestCase):
         self.assertIn("A: OUT_OF_STOCK", msg)
         self.assertIn("B: IN_STOCK", msg)
 
-    def test_telegram_notifier_posts_form_payload(self):
-        captured: dict[str, str] = {}
+    def test_bluesky_notifier_creates_session_then_posts_record(self):
+        calls: list[dict] = []
 
         def fake_sender(request):
-            captured["url"] = request.full_url
-            captured["method"] = request.get_method()
-            captured["body"] = request.data.decode("utf-8")
+            body = json.loads(request.data.decode("utf-8"))
+            calls.append(
+                {
+                    "url": request.full_url,
+                    "method": request.get_method(),
+                    "headers": dict(request.header_items()),
+                    "body": body,
+                }
+            )
+            if request.full_url.endswith("/xrpc/com.atproto.server.createSession"):
+                return {"did": "did:plc:example", "accessJwt": "JWT"}
+            return {"uri": "at://did:plc:example/app.bsky.feed.post/abc"}
 
-        notifier = TelegramNotifier("TOKEN", "12345", request_sender=fake_sender)
+        notifier = BlueskyNotifier(
+            "user.bsky.social",
+            "app-password",
+            request_sender=fake_sender,
+            now_fn=lambda: datetime(2026, 7, 19, 12, 0, 0, tzinfo=timezone.utc),
+        )
         notifier.send("hello")
 
-        self.assertEqual(captured["method"], "POST")
-        self.assertEqual(captured["url"], "https://api.telegram.org/botTOKEN/sendMessage")
-        body = parse_qs(captured["body"])
-        self.assertEqual(body["chat_id"], ["12345"])
-        self.assertEqual(body["text"], ["hello"])
+        self.assertEqual(len(calls), 2)
+
+        session_call = calls[0]
+        self.assertEqual(session_call["method"], "POST")
+        self.assertEqual(session_call["url"], "https://bsky.social/xrpc/com.atproto.server.createSession")
+        self.assertEqual(session_call["body"], {"identifier": "user.bsky.social", "password": "app-password"})
+
+        post_call = calls[1]
+        self.assertEqual(post_call["method"], "POST")
+        self.assertEqual(post_call["url"], "https://bsky.social/xrpc/com.atproto.repo.createRecord")
+        self.assertEqual(post_call["headers"]["Authorization"], "Bearer JWT")
+        self.assertEqual(post_call["body"]["repo"], "did:plc:example")
+        self.assertEqual(post_call["body"]["collection"], "app.bsky.feed.post")
+        self.assertEqual(post_call["body"]["record"]["text"], "hello")
+        self.assertEqual(post_call["body"]["record"]["$type"], "app.bsky.feed.post")
+        self.assertEqual(post_call["body"]["record"]["createdAt"], "2026-07-19T12:00:00.000Z")
+
+    def test_truncate_for_bluesky_keeps_short_message_untouched(self):
+        message = "short message"
+        self.assertEqual(truncate_for_bluesky(message), message)
+
+    def test_truncate_for_bluesky_truncates_long_message(self):
+        message = "x" * (BLUESKY_MAX_GRAPHEMES + 50)
+        result = truncate_for_bluesky(message)
+        self.assertEqual(len(result), BLUESKY_MAX_GRAPHEMES)
+        self.assertTrue(result.endswith("…"))
 
     def test_notification_history_dedup(self):
         with tempfile.TemporaryDirectory() as tmp:

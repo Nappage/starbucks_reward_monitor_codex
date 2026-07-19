@@ -5,20 +5,27 @@ on:
   workflow_dispatch:
     inputs:
       send_test_notification:
-        description: "Send Telegram test notification with current statuses"
+        description: "Send Bluesky test post with current statuses"
         required: false
         default: false
         type: boolean
   schedule:
     - cron: "7,37 * * * *"
 
+permissions:
+  contents: write
+
+concurrency:
+  group: stock-monitor
+  cancel-in-progress: false
+
 jobs:
   monitor:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     env:
-      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
-      TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+      BLUESKY_IDENTIFIER: ${{ secrets.BLUESKY_IDENTIFIER }}
+      BLUESKY_APP_PASSWORD: ${{ secrets.BLUESKY_APP_PASSWORD }}
       SEND_TEST_NOTIFICATION: ${{ github.event.inputs.send_test_notification || 'false' }}
     steps:
       - name: Checkout
@@ -46,6 +53,19 @@ jobs:
             --mode rendered \
             --product "スターマグ ブラウン 296ml" \
             --product "スターマグ グリーン 296ml" \
-            --telegram-bot-token "$TELEGRAM_BOT_TOKEN" \
-            --telegram-chat-id "$TELEGRAM_CHAT_ID" \
+            --bluesky-identifier "$BLUESKY_IDENTIFIER" \
+            --bluesky-app-password "$BLUESKY_APP_PASSWORD" \
             $EXTRA_ARGS
+
+      - name: Persist monitor state
+        if: always()
+        run: |
+          if [ -n "$(git status --porcelain -- .starbucks_monitor_state.json .starbucks_monitor_notifications.json)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add .starbucks_monitor_state.json .starbucks_monitor_notifications.json
+            git commit -m "chore: update monitor state [skip ci]"
+            git push
+          else
+            echo "No state changes to persist"
+          fi

@@ -11,7 +11,7 @@
 - Phase 0（計画策定）完了
 - Phase 1 完了（static解析 + rendered解析 + CLIログ出力）
 - Phase 2 完了（永続化・差分検知）
-- Phase 3 着手（Telegram通知・重複通知抑止）
+- Phase 3 完了（Bluesky通知・重複通知抑止）
 
 ## 使い方（最小）
 ```bash
@@ -39,23 +39,26 @@ PYTHONPATH=src python -m starbucks_monitor.cli \
 
 
 
-差分検知+通知まで実行する場合（在庫復活時のみ通知）:
+差分検知+通知まで実行する場合（在庫復活時のみBlueskyへ投稿）:
 ```bash
 PYTHONPATH=src python -m starbucks_monitor.cli \
   --state-file .starbucks_monitor_state.json \
   --notification-history-file .starbucks_monitor_notifications.json \
-  --telegram-bot-token "$TELEGRAM_BOT_TOKEN" \
-  --telegram-chat-id "$TELEGRAM_CHAT_ID"
+  --bluesky-identifier "$BLUESKY_IDENTIFIER" \
+  --bluesky-app-password "$BLUESKY_APP_PASSWORD"
 ```
 
-テスト通知を明示的に送る（在庫変化がなくても1回送信）:
+テスト投稿を明示的に送る（在庫変化がなくても1回投稿）:
 ```bash
 PYTHONPATH=src python -m starbucks_monitor.cli \
   --mode rendered \
   --send-test-notification \
-  --telegram-bot-token "$TELEGRAM_BOT_TOKEN" \
-  --telegram-chat-id "$TELEGRAM_CHAT_ID"
+  --bluesky-identifier "$BLUESKY_IDENTIFIER" \
+  --bluesky-app-password "$BLUESKY_APP_PASSWORD"
 ```
+
+> Bluesky通知には、アプリパスワード（Bluesky設定画面の「App Passwords」で発行するもの。通常のログインパスワードではない）が必要です。
+> `--bluesky-identifier` にはハンドル（例: `example.bsky.social`）またはDIDを指定します。
 
 
 ## テスト実行
@@ -80,10 +83,15 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 - 実行方式:
   - 手動実行（`workflow_dispatch`）
   - 30分おき定期実行（`schedule`）
+- 実行後、状態ファイル（`.starbucks_monitor_state.json` / `.starbucks_monitor_notifications.json`）に変更があれば自動でリポジトリへコミット＆プッシュし、次回実行に引き継ぐ（差分検知に必須）。
 
-- テスト通知（在庫変化がなくてもTelegram送信を確認）:
+- テスト投稿（在庫変化がなくてもBlueskyへの送信経路を確認）:
   - Actions手動実行時に `send_test_notification=true` を指定
 - 必要Secrets:
-  - `TELEGRAM_BOT_TOKEN`
-  - `TELEGRAM_CHAT_ID`
+  - `BLUESKY_IDENTIFIER`（ハンドルまたはDID）
+  - `BLUESKY_APP_PASSWORD`（Bluesky設定画面で発行するアプリパスワード）
+
+### 定期実行の自動停止に関する注意
+GitHub Actionsは、リポジトリに60日間コミット等のアクティビティが無いと `schedule` トリガーを自動的に無効化する。これを防ぐため、`.github/workflows/keepalive.yml` が毎月1日・15日にハートビート用の空コミットを行い、定期実行が止まらないようにしている。
+- もし在庫監視が動いていない場合は、GitHubのActionsタブで `Starbucks stock monitor` ワークフローが `disabled_inactivity` 状態になっていないか確認し、無効化されていれば手動で「Enable workflow」を実行すること（API単独では再有効化できないため、UIまたは適切な権限のトークンでの操作が必要）。
 
