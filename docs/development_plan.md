@@ -47,14 +47,11 @@ https://www.starbucks.co.jp/mystarbucks/reward/exchange/original_goods/
 ### Phase 3: 通知
 **目標**: 在庫復活時に通知する。
 
-候補:
-- メール
-- Slack Webhook
-- LINE Notify互換方式（代替手段含む）
+採用: Bluesky（AT Protocol、`app.bsky.feed.post` への投稿）。当初はTelegram Bot APIを採用していたが、運用方針変更によりBlueskyへ移行した。
 
 実施項目:
 1. 通知インターフェース定義
-2. 通知アダプタ実装（まず1つ）
+2. 通知アダプタ実装（Telegram → Bluesky へ移行）
 3. 通知抑制（連投防止）
 4. テスト追加（通知条件）
 
@@ -99,4 +96,5 @@ https://www.starbucks.co.jp/mystarbucks/reward/exchange/original_goods/
 - 完了: Phase 0（計画策定）
 - 完了: Phase 1（仕様定義・static/rendered解析・CLIログ出力・単体テスト・実ページ確認）
 - 完了: Phase 2（永続化・差分検知の仕様・実装・テスト）
-- 進行中: Phase 3（Telegram通知・重複通知抑止）実装と検証
+- 完了: Phase 3（Bluesky通知・重複通知抑止）実装と検証。Telegramから移行。
+- 運用改善: GitHub Actionsの60日非アクティブによる自動停止を防ぐ `keepalive.yml` を追加。CI実行間の状態ファイル永続化（コミットバック）を追加し、差分検知が実行を跨いで機能するよう修正。

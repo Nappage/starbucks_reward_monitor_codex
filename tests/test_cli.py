@@ -19,8 +19,8 @@ class CLITest(unittest.TestCase):
         args = parser.parse_args([])
         self.assertEqual(args.state_file, ".starbucks_monitor_state.json")
         self.assertEqual(args.notification_history_file, ".starbucks_monitor_notifications.json")
-        self.assertIsNone(args.telegram_bot_token)
-        self.assertIsNone(args.telegram_chat_id)
+        self.assertIsNone(args.bluesky_identifier)
+        self.assertIsNone(args.bluesky_app_password)
 
     def test_accepts_send_test_notification_flag(self):
         parser = build_parser()

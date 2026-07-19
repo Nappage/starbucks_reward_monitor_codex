@@ -5,7 +5,7 @@ from starbucks_monitor import cli
 
 
 class CLIRuntimeValidationTest(unittest.TestCase):
-    def test_send_test_notification_requires_telegram_credentials(self):
+    def test_send_test_notification_requires_bluesky_credentials(self):
         with patch('sys.argv', ['starbucks_monitor.cli', '--send-test-notification']):
             self.assertEqual(cli.main(), 1)
 
